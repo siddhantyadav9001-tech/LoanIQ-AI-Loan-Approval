@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LoanIQ — AI Loan Approval System</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: rgba(255,255,255,0.07);
+    --border-hover: rgba(99,102,241,0.5);
+    --primary: #6366f1;
+    --primary-light: #818cf8;
+    --accent: #f59e0b;
+    --accent2: #10b981;
+    --danger: #ef4444;
+    --text: #f1f5f9;
+    --text-muted: #64748b;
+    --text-dim: #94a3b8;
+    --success-bg: rgba(16,185,129,0.1);
+    --reject-bg: rgba(239,68,68,0.1);
+    --glow: 0 0 40px rgba(99,102,241,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .orb1 { width: 500px; height: 500px; background: rgba(99,102,241,0.12); top: -150px; right: -100px; }
+  .orb2 { width: 400px; height: 400px; background: rgba(245,158,11,0.07); bottom: 100px; left: -100px; }
+
+  /* Header */
+  header {
+    position: relative;
+    z-index: 10;
+    padding: 24px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(10px);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 42px;
+    height: 42px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 0 20px rgba(99,102,241,0.4);
+  }
+
+  .logo-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .header-badge {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    border: 1px solid rgba(245,158,11,0.3);
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* Main layout */
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  .hero {
+    text-align: center;
+    margin-bottom: 48px;
+    animation: fadeDown 0.6s ease;
+  }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 5vw, 44px);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #fff 0%, #a5b4fc 60%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .hero p {
+    color: var(--text-dim);
+    font-size: 16px;
+    font-weight: 300;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 32px;
+    animation: fadeIn 0.6s ease 0.2s both;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .progress-step {
+    flex: 1;
+    height: 3px;
+    background: var(--border);
+    border-radius: 3px;
+    transition: background 0.4s ease;
+    position: relative;
+  }
+
+  .progress-step.active { background: var(--primary); }
+  .progress-step.done { background: var(--accent2); }
+
+  /* Card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px;
+    box-shadow: var(--glow);
+    animation: slideUp 0.5s ease;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    color: var(--primary-light);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-title .dot {
+    width: 8px;
+    height: 8px;
+    background: var(--primary);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--primary);
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 28px 0;
+  }
+
+  /* Form grid */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .form-group.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 16px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    width: 100%;
+    transition: all 0.25s ease;
+    outline: none;
+    -webkit-appearance: none;
+  }
+
+  input:focus, select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+    background: rgba(26, 34, 53, 0.9);
+  }
+
+  input::placeholder { color: var(--text-muted); }
+
+  input.error { border-color: var(--danger); }
+
+  .input-hint {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* Credit score visual */
+  .credit-wrap {
+    position: relative;
+  }
+
+  .credit-indicator {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+    transition: all 0.3s;
+  }
+
+  .credit-poor { background: rgba(239,68,68,0.15); color: #ef4444; }
+  .credit-fair { background: rgba(245,158,11,0.15); color: #f59e0b; }
+  .credit-good { background: rgba(16,185,129,0.15); color: #10b981; }
+  .credit-excellent { background: rgba(99,102,241,0.2); color: #818cf8; }
+
+  /* Checkbox toggle */
+  .toggle-section {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .toggle-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .toggle-header:hover { background: rgba(99,102,241,0.05); }
+
+  .toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .toggle-label .icon {
+    width: 36px;
+    height: 36px;
+    background: rgba(99,102,241,0.1);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: all 0.3s;
+  }
+
+  .toggle-label .toggle-text strong {
+    display: block;
+    font-size: 14px;
+    color: var(--text);
+  }
+
+  .toggle-label .toggle-text span {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* Custom checkbox switch */
+  .switch {
+    width: 48px;
+    height: 26px;
+    background: var(--border);
+    border-radius: 13px;
+    position: relative;
+    transition: background 0.3s;
+    flex-shrink: 0;
+  }
+
+  .switch::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.3s, background 0.3s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  }
+
+  .switch.on { background: var(--primary); }
+  .switch.on::after { transform: translateX(22px); }
+
+  .toggle-body {
+    display: none;
+    padding: 0 20px 20px;
+    animation: expandDown 0.3s ease;
+  }
+
+  @keyframes expandDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .toggle-body.visible { display: block; }
+
+  .toggle-section.active {
+    border-color: rgba(99,102,241,0.3);
+    box-shadow: 0 0 20px rgba(99,102,241,0.08);
+  }
+
+  .toggle-section.active .icon {
+    background: rgba(99,102,241,0.2);
+  }
+
+  /* Submit button */
+  .submit-btn {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
+    border: none;
+    border-radius: 14px;
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.02em;
+    margin-top: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .submit-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .submit-btn:hover::before { opacity: 1; }
+  .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(99,102,241,0.4); }
+  .submit-btn:active { transform: translateY(0); }
+  .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  .spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    display: none;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Result card */
+  .result-card {
+    display: none;
+    margin-top: 28px;
+    border-radius: 20px;
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+    animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .result-card.approved {
+    background: var(--success-bg);
+    border: 1px solid rgba(16,185,129,0.3);
+  }
+
+  .result-card.rejected {
+    background: var(--reject-bg);
+    border: 1px solid rgba(239,68,68,0.3);
+  }
+
+  .result-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    gap: 16px;
+  }
+
+  .result-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    flex-shrink: 0;
+  }
+
+  .approved .result-icon { background: rgba(16,185,129,0.2); }
+  .rejected .result-icon { background: rgba(239,68,68,0.2); }
+
+  .result-text h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    margin-bottom: 4px;
+  }
+
+  .approved .result-text h2 { color: #10b981; }
+  .rejected .result-text h2 { color: #ef4444; }
+
+  .result-text p { color: var(--text-dim); font-size: 14px; }
+
+  /* Confidence meter */
+  .confidence-block {
+    margin-bottom: 24px;
+  }
+
+  .confidence-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+  }
+
+  .confidence-track {
+    height: 8px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .confidence-fill {
+    height: 100%;
+    border-radius: 8px;
+    width: 0;
+    transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s;
+  }
+
+  .approved .confidence-fill { background: linear-gradient(90deg, #10b981, #34d399); }
+  .rejected .confidence-fill { background: linear-gradient(90deg, #ef4444, #f87171); }
+
+  /* Factors */
+  .factors-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 12px;
+  }
+
+  .factor-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    animation: slideIn 0.4s ease both;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .factor-item.positive { background: rgba(16,185,129,0.08); color: #6ee7b7; }
+  .factor-item.negative { background: rgba(239,68,68,0.08); color: #fca5a5; }
+  .factor-item.neutral { background: rgba(245,158,11,0.08); color: #fcd34d; }
+
+  .factor-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .positive .factor-dot { background: #10b981; }
+  .negative .factor-dot { background: #ef4444; }
+  .neutral .factor-dot { background: #f59e0b; }
+
+  /* Stats row */
+  .stats-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .stat-box {
+    flex: 1;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+  }
+
+  .stat-box .val {
+    font-family: 'DM Mono', monospace;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--primary-light);
+    display: block;
+  }
+
+  .stat-box .lbl {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-top: 2px;
+    display: block;
+  }
+
+  /* Reset button */
+  .reset-btn {
+    margin-top: 20px;
+    width: 100%;
+    padding: 13px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text-dim);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .reset-btn:hover { border-color: var(--primary); color: var(--primary-light); }
+
+  /* Floating tooltip errors */
+  .error-msg {
+    color: #f87171;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    margin-top: 4px;
+    display: none;
+  }
+
+  /* Range slider for credit score */
+  input[type="range"] {
+    -webkit-appearance: none;
+    background: linear-gradient(to right, var(--primary) 0%, var(--primary) 0%, var(--surface2) 0%);
+    height: 6px;
+    border-radius: 6px;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(99,102,241,0.5);
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+  /* Floating amount hint */
+  .amount-display {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--primary-light);
+  }
+
+  @media (max-width: 600px) {
+    header { padding: 16px 20px; }
+    main { padding: 32px 16px 60px; }
+    .card { padding: 24px 20px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-group.full { grid-column: 1; }
+    .stats-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🏦</div>
+    <span class="logo-text">LoanIQ</span>
+  </div>
+  <span class="header-badge">AI Powered</span>
+</header>
+
+<main>
+  <div class="hero">
+    <h1>Smart Loan Approval<br>in Seconds</h1>
+    <p>Enter your financial details below and our AI model will instantly assess your loan eligibility.</p>
+  </div>
+
+  <div class="progress-bar" id="progressBar">
+    <div class="progress-step active" id="ps1"></div>
+    <div class="progress-step" id="ps2"></div>
+    <div class="progress-step" id="ps3"></div>
+  </div>
+
+  <div class="card">
+
+    <!-- Personal Info -->
+    <div class="section-title">
+      <div class="dot"></div>
+      Personal Information
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Full Name</label>
+        <input type="text" id="name" placeholder="Enter your full name" oninput="onInputChange()">
+        <span class="error-msg" id="err-name">Name is required</span>
+      </div>
+      <div class="form-group">
+        <label>Age (years)</label>
+        <input type="number" id="age" placeholder="e.g. 32" min="18" max="80" oninput="onInputChange()">
+        <span class="error-msg" id="err-age">Age must be 18–80</span>
+      </div>
+      <div class="form-group">
+        <label>Annual Income (₹)</label>
+        <div style="position:relative;">
+          <input type="number" id="annual_income" placeholder="e.g. 600000" min="1" oninput="onInputChange(); updateIncomeDisplay()" style="padding-right: 80px;">
+          <span class="amount-display" id="incomeDisplay"></span>
+        </div>
+        <span class="error-msg" id="err-income">Enter valid income</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Credit Score -->
+    <div class="section-title">
+      <div class="dot"></div>
+      Credit Score
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Credit Score (300 – 900)</label>
+        <div style="position:relative;">
+          <input type="range" id="creditRange" min="300" max="900" value="650" oninput="syncCreditScore(this.value)" style="width:100%; margin-bottom:10px;">
+          <div style="display:flex; gap:12px; align-items:center;">
+            <div class="credit-wrap" style="flex:1; position:relative;">
+              <input type="number" id="credit_score" placeholder="300–900" min="300" max="900" value="650" oninput="onInputChange(); updateCreditBadge(); syncRange(this.value)" style="padding-right: 90px;">
+              <span class="credit-indicator" id="creditBadge">Good</span>
+            </div>
+          </div>
+        </div>
+        <span class="error-msg" id="err-credit">Score must be between 300–900</span>
+        <span class="input-hint">300=Poor · 550=Fair · 650=Good · 750+=Excellent</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Ongoing Loan -->
+    <div class="section-title">
+      <div class="dot"></div>
+      Loan Details
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:16px;">
+
+      <!-- Ongoing Loan Toggle -->
+      <div class="toggle-section" id="ongoingSection">
+        <div class="toggle-header" onclick="toggleSection('ongoing')">
+          <div class="toggle-label">
+            <div class="icon">💳</div>
+            <div class="toggle-text">
+              <strong>Ongoing Loan</strong>
+              <span>Do you currently have an active loan?</span>
+            </div>
+          </div>
+          <div class="switch" id="switch-ongoing"></div>
+        </div>
+        <div class="toggle-body" id="body-ongoing">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Outstanding Amount (₹)</label>
+              <div style="position:relative;">
+                <input type="number" id="ongoing_loan_amount" placeholder="e.g. 500000" min="0" oninput="updateOngoingDisplay()">
+                <span class="amount-display" id="ongoingDisplay"></span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Loan Type</label>
+              <select id="ongoing_loan_type">
+                <option value="">Select type</option>
+                <option value="home">Home Loan</option>
+                <option value="car">Car Loan</option>
+                <option value="personal">Personal Loan</option>
+                <option value="education">Education Loan</option>
+                <option value="business">Business Loan</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loan History Toggle -->
+      <div class="toggle-section" id="historySection">
+        <div class="toggle-header" onclick="toggleSection('history')">
+          <div class="toggle-label">
+            <div class="icon">📋</div>
+            <div class="toggle-text">
+              <strong>Loan History</strong>
+              <span>Have you taken loans in the past?</span>
+            </div>
+          </div>
+          <div class="switch" id="switch-history"></div>
+        </div>
+        <div class="toggle-body" id="body-history">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Number of Previous Loans</label>
+              <input type="number" id="num_prev_loans" placeholder="e.g. 2" min="1" max="20">
+            </div>
+            <div class="form-group">
+              <label>Number of Defaults</label>
+              <input type="number" id="loan_history_defaults" placeholder="e.g. 0" min="0" max="20">
+              <span class="input-hint">0 = No defaults (ideal)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Submit -->
+    <button class="submit-btn" id="submitBtn" onclick="submitForm()">
+      <div class="spinner" id="spinner"></div>
+      <span id="btnText">🔍 Check Loan Approval</span>
+    </button>
+
+    <!-- Result -->
+    <div class="result-card" id="resultCard">
+      <div class="result-header">
+        <div style="display:flex; align-items:flex-start; gap:16px;">
+          <div class="result-icon" id="resultIcon"></div>
+          <div class="result-text">
+            <h2 id="resultTitle"></h2>
+            <p id="resultSubtitle"></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="confidence-block">
+        <div class="confidence-label">
+          <span>AI Confidence</span>
+          <span id="confidenceVal">—</span>
+        </div>
+        <div class="confidence-track">
+          <div class="confidence-fill" id="confidenceFill"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="factors-title">Key Factors Considered</div>
+        <div id="factorsList"></div>
+      </div>
+
+      <div class="stats-row" id="statsRow"></div>
+    </div>
+
+    <button class="reset-btn" id="resetBtn" onclick="resetForm()" style="display:none;">↺ New Application</button>
+
+  </div>
+</main>
+
+<script>
+const toggleState = { ongoing: false, history: false };
+
+function toggleSection(key) {
+  toggleState[key] = !toggleState[key];
+  const body = document.getElementById(`body-${key}`);
+  const sw = document.getElementById(`switch-${key}`);
+  const section = document.getElementById(key === 'ongoing' ? 'ongoingSection' : 'historySection');
+
+  if (toggleState[key]) {
+    body.classList.add('visible');
+    sw.classList.add('on');
+    section.classList.add('active');
+  } else {
+    body.classList.remove('visible');
+    sw.classList.remove('on');
+    section.classList.remove('active');
+    // Clear values
+    if (key === 'ongoing') {
+      document.getElementById('ongoing_loan_amount').value = '';
+      document.getElementById('ongoing_loan_type').value = '';
+      document.getElementById('ongoingDisplay').textContent = '';
+    }
+    if (key === 'history') {
+      document.getElementById('num_prev_loans').value = '';
+      document.getElementById('loan_history_defaults').value = '';
+    }
+  }
+  updateProgress();
+}
+
+function updateCreditBadge() {
+  const val = parseInt(document.getElementById('credit_score').value);
+  const badge = document.getElementById('creditBadge');
+  badge.className = 'credit-indicator';
+  if (!val) { badge.textContent = ''; return; }
+  if (val < 550) { badge.textContent = 'Poor'; badge.classList.add('credit-poor'); }
+  else if (val < 650) { badge.textContent = 'Fair'; badge.classList.add('credit-fair'); }
+  else if (val < 750) { badge.textContent = 'Good'; badge.classList.add('credit-good'); }
+  else { badge.textContent = 'Excellent'; badge.classList.add('credit-excellent'); }
+}
+
+function syncCreditScore(val) {
+  document.getElementById('credit_score').value = val;
+  updateCreditBadge();
+  // Update range background
+  const pct = ((val - 300) / 600) * 100;
+  const el = document.getElementById('creditRange');
+  el.style.background = `linear-gradient(to right, var(--primary) ${pct}%, var(--surface2) ${pct}%)`;
+}
+
+function syncRange(val) {
+  if (val >= 300 && val <= 900) {
+    document.getElementById('creditRange').value = val;
+    syncCreditScore(val);
+  }
+}
+
+function formatINR(val) {
+  if (!val || isNaN(val)) return '';
+  const n = parseFloat(val);
+  if (n >= 10000000) return `₹${(n/10000000).toFixed(2)}Cr`;
+  if (n >= 100000) return `₹${(n/100000).toFixed(1)}L`;
+  if (n >= 1000) return `₹${(n/1000).toFixed(1)}K`;
+  return `₹${n}`;
+}
+
+function updateIncomeDisplay() {
+  const val = document.getElementById('annual_income').value;
+  document.getElementById('incomeDisplay').textContent = formatINR(val);
+}
+
+function updateOngoingDisplay() {
+  const val = document.getElementById('ongoing_loan_amount').value;
+  document.getElementById('ongoingDisplay').textContent = formatINR(val);
+}
+
+function onInputChange() {
+  updateProgress();
+}
+
+function updateProgress() {
+  const name = document.getElementById('name').value;
+  const age = document.getElementById('age').value;
+  const income = document.getElementById('annual_income').value;
+  const credit = document.getElementById('credit_score').value;
+
+  const p1 = document.getElementById('ps1');
+  const p2 = document.getElementById('ps2');
+  const p3 = document.getElementById('ps3');
+
+  const step1Done = name && age && income;
+  const step2Done = step1Done && credit;
+  const step3Done = step2Done;
+
+  p1.className = 'progress-step ' + (step1Done ? 'done' : 'active');
+  p2.className = 'progress-step ' + (step2Done ? 'done' : step1Done ? 'active' : '');
+  p3.className = 'progress-step ' + (step3Done && (toggleState.ongoing || toggleState.history) ? 'done' : step2Done ? 'active' : '');
+}
+
+async function submitForm() {
+  const resultCard = document.getElementById('resultCard');
+  resultCard.style.display = 'none';
+  document.getElementById('resetBtn').style.display = 'none';
+
+  // Gather values
+  const name = document.getElementById('name').value.trim();
+  const age = parseInt(document.getElementById('age').value);
+  const annual_income = parseFloat(document.getElementById('annual_income').value);
+  const credit_score = parseInt(document.getElementById('credit_score').value);
+  const has_ongoing = toggleState.ongoing ? 1 : 0;
+  const ongoing_loan_amount = has_ongoing ? parseFloat(document.getElementById('ongoing_loan_amount').value || 0) : 0;
+  const ongoing_loan_type = has_ongoing ? document.getElementById('ongoing_loan_type').value : '';
+  const has_history = toggleState.history ? 1 : 0;
+  const loan_history_defaults = has_history ? parseInt(document.getElementById('loan_history_defaults').value || 0) : 0;
+  const num_prev_loans = has_history ? parseInt(document.getElementById('num_prev_loans').value || 0) : 0;
+
+  // Validate
+  let valid = true;
+  if (!name) { showErr('err-name', true); valid = false; } else { showErr('err-name', false); }
+  if (!age || age < 18 || age > 80) { showErr('err-age', true); valid = false; } else { showErr('err-age', false); }
+  if (!annual_income || annual_income <= 0) { showErr('err-income', true); valid = false; } else { showErr('err-income', false); }
+  if (!credit_score || credit_score < 300 || credit_score > 900) { showErr('err-credit', true); valid = false; } else { showErr('err-credit', false); }
+
+  if (!valid) return;
+
+  // Loading state
+  const btn = document.getElementById('submitBtn');
+  const spinner = document.getElementById('spinner');
+  const btnText = document.getElementById('btnText');
+  btn.disabled = true;
+  spinner.style.display = 'block';
+  btnText.textContent = 'Analyzing your profile…';
+
+  try {
+    const res = await fetch('/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name, age, annual_income, credit_score,
+        has_ongoing_loan: has_ongoing,
+        ongoing_loan_amount, ongoing_loan_type,
+        has_loan_history: has_history,
+        loan_history_defaults, num_prev_loans
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      showResult(data);
+    } else {
+      alert('Error: ' + (data.errors || []).join(', '));
+    }
+  } catch (e) {
+    alert('Server error. Make sure Flask backend is running on port 5000.');
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    btnText.textContent = '🔍 Check Loan Approval';
+  }
+}
+
+function showErr(id, show) {
+  const el = document.getElementById(id);
+  el.style.display = show ? 'block' : 'none';
+}
+
+function showResult(data) {
+  const card = document.getElementById('resultCard');
+  card.className = 'result-card ' + (data.approved ? 'approved' : 'rejected');
+  card.style.display = 'block';
+
+  document.getElementById('resultIcon').textContent = data.approved ? '✅' : '❌';
+  document.getElementById('resultTitle').textContent = data.approved ? 'Loan Approved!' : 'Loan Not Approved';
+  document.getElementById('resultSubtitle').textContent = data.approved
+    ? `${data.name}, your application looks strong. Proceed with your bank.`
+    : `${data.name}, your current profile doesn't meet the criteria. Consider improving your credit score.`;
+
+  // Confidence
+  document.getElementById('confidenceVal').textContent = `${data.confidence}%`;
+  setTimeout(() => {
+    document.getElementById('confidenceFill').style.width = data.confidence + '%';
+  }, 100);
+
+  // Factors
+  const list = document.getElementById('factorsList');
+  list.innerHTML = '';
+  data.factors.forEach((f, i) => {
+    const div = document.createElement('div');
+    div.className = `factor-item ${f.type}`;
+    div.style.animationDelay = `${i * 0.08}s`;
+    div.innerHTML = `<div class="factor-dot"></div><span>${f.text}</span>`;
+    list.appendChild(div);
+  });
+
+  // Stats
+  const statsRow = document.getElementById('statsRow');
+  statsRow.innerHTML = `
+    <div class="stat-box">
+      <span class="val">${document.getElementById('credit_score').value}</span>
+      <span class="lbl">Credit Score</span>
+    </div>
+    <div class="stat-box">
+      <span class="val">${formatINR(document.getElementById('annual_income').value)}</span>
+      <span class="lbl">Annual Income</span>
+    </div>
+    <div class="stat-box">
+      <span class="val">${data.approval_probability}%</span>
+      <span class="lbl">Approval Chance</span>
+    </div>
+  `;
+
+  document.getElementById('resetBtn').style.display = 'block';
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function resetForm() {
+  document.getElementById('name').value = '';
+  document.getElementById('age').value = '';
+  document.getElementById('annual_income').value = '';
+  document.getElementById('credit_score').value = '650';
+  document.getElementById('incomeDisplay').textContent = '';
+  syncCreditScore(650);
+
+  // Reset toggles
+  ['ongoing', 'history'].forEach(k => {
+    if (toggleState[k]) toggleSection(k);
+  });
+
+  document.getElementById('resultCard').style.display = 'none';
+  document.getElementById('resetBtn').style.display = 'none';
+
+  ['ps1','ps2','ps3'].forEach((id, i) => {
+    document.getElementById(id).className = 'progress-step' + (i === 0 ? ' active' : '');
+  });
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Init
+syncCreditScore(650);
+</script>
+</body>
+</html>
